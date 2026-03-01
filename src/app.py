@@ -51,5 +51,9 @@ class App(QMainWindow):
         view_menu.addAction(zoom_out_action)
 
         help_menu = menu_bar.addMenu("&Help")
-
+        
         #Help actions
+
+        about_action = QAction("&About", self)
+
+        help_menu.addAction(about_action)
