@@ -36,8 +36,19 @@ class App(QMainWindow):
         file_menu.addAction(exit_action)
 
         view_menu = menu_bar.addMenu("&View")
-        
+
         #View actions
+
+        zoom_in_action = QAction("&Zoom In", self)
+        zoom_in_action.setShortcut("Ctrl+=") 
+        zoom_in_action.triggered.connect(self.editor.zoomIn) 
+        
+        zoom_out_action = QAction("&Zoom Out", self)
+        zoom_out_action.setShortcut("Ctrl+-")
+        zoom_out_action.triggered.connect(self.editor.zoomOut) 
+        
+        view_menu.addAction(zoom_in_action)
+        view_menu.addAction(zoom_out_action)
 
         help_menu = menu_bar.addMenu("&Help")
 
