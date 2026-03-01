@@ -16,3 +16,7 @@ class App(QMainWindow):
 
     def view(self):
         menu_bar = self.menuBar()
+
+        file_menu = menu_bar.addMenu("&File")
+        view_menu = menu_bar.addMenu("&View")
+        help_menu = menu_bar.addMenu("&Help")
