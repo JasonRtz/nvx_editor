@@ -16,7 +16,29 @@ class App(QMainWindow):
 
     def view(self):
         menu_bar = self.menuBar()
-
+        
         file_menu = menu_bar.addMenu("&File")
+        
+        #File actions
+        open_action = QAction("&Open", self)
+        open_action.setShortcut("Ctrl+O")
+
+        save_action = QAction("&Save", self)
+        save_action.setShortcut("Ctrl+S")
+
+        exit_action = QAction("&Exit", self)
+        exit_action.setShortcut("Ctrl+Q")
+        exit_action.triggered.connect(self.close)
+
+        file_menu.addAction(open_action)
+        file_menu.addAction(save_action)
+        file_menu.addSeparator()
+        file_menu.addAction(exit_action)
+
         view_menu = menu_bar.addMenu("&View")
+        
+        #View actions
+
         help_menu = menu_bar.addMenu("&Help")
+
+        #Help actions
