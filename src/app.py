@@ -11,6 +11,7 @@ class App(QMainWindow):
 
         self.editor = QTextEdit()
         self.setCentralWidget(self.editor)
+        self.current_file = None
 
         self.view()
 
@@ -22,9 +23,11 @@ class App(QMainWindow):
         #File actions
         open_action = QAction("&Open", self)
         open_action.setShortcut("Ctrl+O")
+        open_action.triggered.connect(self.file_open)
 
         save_action = QAction("&Save", self)
         save_action.setShortcut("Ctrl+S")
+        save_action.triggered.connect(self.file_save)
 
         exit_action = QAction("&Exit", self)
         exit_action.setShortcut("Ctrl+Q")
@@ -55,5 +58,64 @@ class App(QMainWindow):
         #Help actions
 
         about_action = QAction("&About", self)
-
+        about_action.triggered.connect(self.about_dialog)
         help_menu.addAction(about_action)
+    
+    def about_dialog(self, event):
+        QMessageBox.about(self, "About NVK Editor",
+                            "NVK Text Editor\n"
+                            "Built with Python and Qt\n"
+                            "Version 0.1"
+        )
+
+    def closeEvent(self, event):
+        if self.editor.document().isModified():
+            reply = QMessageBox.question(
+                self, 'Save Changes?',
+                "You have unsaved changes. Do you want to save them before exiting?",
+                QMessageBox.StandardButton.Save | 
+                QMessageBox.StandardButton.Discard | 
+                QMessageBox.StandardButton.Cancel,
+                QMessageBox.StandardButton.Save
+            )
+
+            if reply == QMessageBox.StandardButton.Save:
+                self.file_save()
+                event.accept() 
+            elif reply == QMessageBox.StandardButton.Discard:
+                event.accept() 
+            else:
+                event.ignore()
+        else:
+            event.accept() 
+
+    def file_open(self):
+        path, _ = QFileDialog.getOpenFileName(self, "Open File", "", 
+                                             "Text Files (*.txt);;All Files (*)")
+        if path:
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    text = f.read()
+                self.editor.setPlainText(text)
+                self.current_file = path
+                self.setWindowTitle(f"Simple Python Editor - {path}")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Could not open file: {e}")
+
+    def file_save(self):
+        if not self.current_file:
+            path, _ = QFileDialog.getSaveFileName(self, "Save File", "", 
+                                                 "Text Files (*.txt);;All Files (*)")
+            if not path:
+                return
+            self.current_file = path
+            
+        try:
+            with open(self.current_file, 'w', encoding='utf-8') as f:
+                f.write(self.editor.toPlainText())
+            
+            self.editor.document().setModified(False)
+            
+            self.setWindowTitle(f"Simple Text Editor - {self.current_file}")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Could not save file: {e}")
