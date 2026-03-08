@@ -37,6 +37,29 @@ class App(QMainWindow):
         file_menu.addAction(save_action)
         file_menu.addSeparator()
         file_menu.addAction(exit_action)
+        
+        edit_menu = menu_bar.addMenu("&Edit")
+
+        cut_action = QAction("&Cut", self)
+        cut_action.setShortcut("Ctrl+X")
+        cut_action.triggered.connect(self.editor.cut)
+
+        copy_action = QAction("&Copy", self)
+        copy_action.setShortcut("Ctrl+C")
+        copy_action.triggered.connect(self.editor.copy) 
+
+        paste_action = QAction("&Paste", self)
+        paste_action.setShortcut("Ctrl+V")
+        paste_action.triggered.connect(self.editor.paste)
+
+        select_all_action = QAction("&Select All", self)
+        select_all_action.setShortcut("Ctrl+A")
+        select_all_action.triggered.connect(self.editor.selectAll)
+
+        edit_menu.addAction(cut_action)
+        edit_menu.addAction(copy_action)
+        edit_menu.addAction(paste_action)
+        edit_menu.addAction(select_all_action)
 
         view_menu = menu_bar.addMenu("&View")
 
