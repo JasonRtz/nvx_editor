@@ -1,6 +1,7 @@
 import sys
 from PyQt6.QtWidgets import (QMainWindow, QTextEdit, QFileDialog, QMessageBox)
 from PyQt6.QtGui import QAction, QIcon
+from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 
 
 class App(QMainWindow):
@@ -29,12 +30,17 @@ class App(QMainWindow):
         save_action.setShortcut("Ctrl+S")
         save_action.triggered.connect(self.file_save)
 
+        print_action = QAction("&Print", self)
+        print_action.setShortcut("Ctrl+P")
+        print_action.triggered.connect(self.print_file)
+
         exit_action = QAction("&Exit", self)
         exit_action.setShortcut("Ctrl+Q")
         exit_action.triggered.connect(self.close)
 
         file_menu.addAction(open_action)
         file_menu.addAction(save_action)
+        file_menu.addAction(print_action)
         file_menu.addSeparator()
         file_menu.addAction(exit_action)
         
@@ -142,3 +148,11 @@ class App(QMainWindow):
             self.setWindowTitle(f"Simple Text Editor - {self.current_file}")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Could not save file: {e}")
+
+    def print_file(self):
+        printer = QPrinter(QPrinter.PrinterMode.HighResolution)
+    
+        dialog = QPrintDialog(printer, self)
+    
+        if dialog.exec() == QPrintDialog.DialogCode.Accepted:
+            self.editor.print_(printer)
