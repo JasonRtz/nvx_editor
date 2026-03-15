@@ -4,7 +4,6 @@ from PyQt6.QtWidgets import (QMainWindow, QTextEdit, QFileDialog, QMessageBox)
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 
-
 class App(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -16,7 +15,7 @@ class App(QMainWindow):
         self.setCentralWidget(self.editor)
         self.current_file = None
 
-        icon_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "data", "nvx_editor.png"))
+        icon_path = os.path.normpath(os.path.join(os.path.dirname(__file__), ".", "nvx_editor.png"))
 
         try:
             icon = QIcon(icon_path)
@@ -26,7 +25,7 @@ class App(QMainWindow):
             self.setWindowIcon(icon)
 
         except Exception as e:
-            print(f"[WARN] Could not set window icon ({icon_path}): {e}")
+            print(f"Could not set window icon ({icon_path}): {e}")
 
         self.view()
 
