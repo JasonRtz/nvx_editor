@@ -1,4 +1,5 @@
 import sys
+import os
 from PyQt6.QtWidgets import (QMainWindow, QTextEdit, QFileDialog, QMessageBox)
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
@@ -9,10 +10,23 @@ class App(QMainWindow):
         super().__init__()
         self.setWindowTitle("NVX Editor")
         self.resize(800, 600)
+        
 
         self.editor = QTextEdit()
         self.setCentralWidget(self.editor)
         self.current_file = None
+
+        icon_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "data", "img", "nvx_editor.png"))
+
+        try:
+            icon = QIcon(icon_path)
+            if icon.isNull():
+                raise ValueError("Failed to load icon data:", icon_path)
+
+            self.setWindowIcon(icon)
+
+        except Exception as e:
+            print("Could not set window icon", icon_path, ":", e)
 
         self.view()
 
