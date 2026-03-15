@@ -16,7 +16,7 @@ class App(QMainWindow):
         self.setCentralWidget(self.editor)
         self.current_file = None
 
-        icon_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "data", "img", "nvx_editor.png"))
+        icon_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "data", "nvx_editor.png"))
 
         try:
             icon = QIcon(icon_path)
