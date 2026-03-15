@@ -21,12 +21,12 @@ class App(QMainWindow):
         try:
             icon = QIcon(icon_path)
             if icon.isNull():
-                raise ValueError("Failed to load icon data:", icon_path)
+                raise ValueError(f"Failed to load icon data: {icon_path}")
 
             self.setWindowIcon(icon)
 
         except Exception as e:
-            print("Could not set window icon", icon_path, ":", e)
+            print(f"[WARN] Could not set window icon ({icon_path}): {e}")
 
         self.view()
 
@@ -44,6 +44,10 @@ class App(QMainWindow):
         save_action.setShortcut("Ctrl+S")
         save_action.triggered.connect(self.file_save)
 
+        save_as_action = QAction("Save &As", self)
+        save_as_action.setShortcut("Ctrl+Shift+S")
+        save_as_action.triggered.connect(self.file_save_as)
+
         print_action = QAction("&Print", self)
         print_action.setShortcut("Ctrl+P")
         print_action.triggered.connect(self.print_file)
@@ -54,6 +58,7 @@ class App(QMainWindow):
 
         file_menu.addAction(open_action)
         file_menu.addAction(save_action)
+        file_menu.addAction(save_as_action)
         file_menu.addAction(print_action)
         file_menu.addSeparator()
         file_menu.addAction(exit_action)
@@ -105,8 +110,8 @@ class App(QMainWindow):
         help_menu.addAction(about_action)
     
     def about_dialog(self, event):
-        QMessageBox.about(self, "About NVK Editor",
-                            "NVK Text Editor\n"
+        QMessageBox.about(self, "About NVX Editor",
+                            "NVX Text Editor\n"
                             "Built with Python and Qt\n"
                             "Version 0.1"
         )
@@ -141,14 +146,14 @@ class App(QMainWindow):
                     text = f.read()
                 self.editor.setPlainText(text)
                 self.current_file = path
-                self.setWindowTitle(f"Simple Python Editor - {path}")
+                self.setWindowTitle(f"NVX Editor - {path}")
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Could not open file: {e}")
 
     def file_save(self):
         if not self.current_file:
             path, _ = QFileDialog.getSaveFileName(self, "Save File", "", 
-                                                 "Text Files (*.txt);;All Files (*)")
+                                                 "Text File (*.txt);;All Files (*)")
             if not path:
                 return
             self.current_file = path
@@ -159,7 +164,37 @@ class App(QMainWindow):
             
             self.editor.document().setModified(False)
             
-            self.setWindowTitle(f"Simple Text Editor - {self.current_file}")
+            self.setWindowTitle(f"NVX Editor - {self.current_file}")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Could not save file: {e}")
+    
+    def file_save_as(self):
+        path, selected_filter = QFileDialog.getSaveFileName(
+            self,
+            "Save File As",
+            "",
+            "Text File (*.txt);;PDF File (*.pdf);;All Files (*)"
+        )
+
+        if not path:
+            return
+
+        try:
+            if path.endswith(".pdf"):
+                printer = QPrinter(QPrinter.PrinterMode.HighResolution)
+                printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
+                printer.setOutputFileName(path)
+
+                self.editor.document().print(printer)
+
+            else:
+                with open(path, 'w', encoding='utf-8') as f:
+                    f.write(self.editor.toPlainText())
+
+            self.current_file = path
+            self.editor.document().setModified(False)
+            self.setWindowTitle(f"NVX Editor - {path}")
+
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Could not save file: {e}")
 
