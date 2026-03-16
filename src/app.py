@@ -1,15 +1,16 @@
 import sys
 import os
-from PyQt6.QtWidgets import (QMainWindow, QTextEdit, QFileDialog, QMessageBox)
-from PyQt6.QtGui import QAction, QIcon
+from PyQt6.QtWidgets import (QDialog, QMainWindow, QTextEdit, QFileDialog, QMessageBox)
+from PyQt6.QtGui import QAction, QIcon, QKeySequence, QFont
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
+from settings import Settings
 
 class App(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("NVX Editor")
         self.resize(800, 600)
-        
+        self.current_theme = "Light"
 
         self.editor = QTextEdit()
         self.setCentralWidget(self.editor)
@@ -76,14 +77,24 @@ class App(QMainWindow):
         paste_action.setShortcut("Ctrl+V")
         paste_action.triggered.connect(self.editor.paste)
 
+        delete_action = QAction("&Delete",self)
+        delete_action.setShortcut(QKeySequence.StandardKey.Delete)
+        delete_action.triggered.connect(self.handle_delete)
+
         select_all_action = QAction("&Select All", self)
         select_all_action.setShortcut("Ctrl+A")
         select_all_action.triggered.connect(self.editor.selectAll)
 
+        settings_action = QAction("&Settings",self)
+        settings_action.triggered.connect(self.show_settings)
+
         edit_menu.addAction(cut_action)
         edit_menu.addAction(copy_action)
         edit_menu.addAction(paste_action)
+        edit_menu.addAction(delete_action)
         edit_menu.addAction(select_all_action)
+        edit_menu.addSeparator()
+        edit_menu.addAction(settings_action)
 
         view_menu = menu_bar.addMenu("&View")
 
@@ -138,7 +149,7 @@ class App(QMainWindow):
 
     def file_open(self):
         path, _ = QFileDialog.getOpenFileName(self, "Open File", "", 
-                                             "Text Files (*.txt);;All Files (*)")
+                                             "Text File (*.txt);;All Files (*)")
         if path:
             try:
                 with open(path, 'r', encoding='utf-8') as f:
@@ -204,3 +215,42 @@ class App(QMainWindow):
     
         if dialog.exec() == QPrintDialog.DialogCode.Accepted:
             self.editor.print_(printer)
+    
+    def handle_delete(self):
+        cursor = self.editor.textCursor()
+        if cursor.hasSelection():
+            cursor.removeSelectedText()
+        else:
+            cursor.deleteChar()
+    
+    def load_theme(self, theme_name):
+        base_dir = os.path.dirname(__file__)
+        
+        filename = "dark.qss" if theme_name == "Dark" else "light.qss"
+        file_path = os.path.join(base_dir, filename)
+        
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, "r") as f:
+                    style_data = f.read()
+                    self.setStyleSheet(style_data)
+                    print(f"Successfully loaded {theme_name} theme.") 
+            except Exception as e:
+                print(f"Error reading stylesheet: {e}")
+        else:
+            print(f"Warning: Stylesheet not found at {file_path}")
+            self.setStyleSheet("") 
+
+    def show_settings(self):
+        current_font = self.editor.font().family()
+        current_size = self.editor.font().pointSize()
+
+        dialog = Settings(current_font, current_size, self.current_theme, self)
+        
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            new_font = dialog.font_combo.currentText()
+            new_size = dialog.font_size_spin.value()
+            self.editor.setFont(QFont(new_font, new_size))
+            
+            self.current_theme = dialog.theme_combo.currentText()
+            self.load_theme(self.current_theme)
