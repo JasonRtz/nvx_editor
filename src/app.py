@@ -1,11 +1,19 @@
 import os
+import sys
+import json
+from pathlib import Path
+from PyQt6.QtCore import QStandardPaths
 from PyQt6.QtWidgets import (QDialog, QMainWindow, QTextEdit, QFileDialog, QMessageBox)
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QFont
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 from .settings import Settings
-import json
 
 class App(QMainWindow):
+    def resource_base_path(self):
+        if getattr(sys, '_MEIPASS', None):
+            return Path(sys._MEIPASS)
+        return Path(__file__).resolve().parent
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("NVX Editor")
@@ -18,7 +26,7 @@ class App(QMainWindow):
 
         self.load_settings_from_json()
 
-        icon_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "data", "icons", "nvx_editor.png"))
+        icon_path = os.path.normpath(str(self.resource_base_path() / "data" / "icons" / "nvx_editor.png"))
 
         try:
             icon = QIcon(icon_path)
@@ -227,27 +235,30 @@ class App(QMainWindow):
             cursor.deleteChar()
     
     def load_theme(self, theme_name):
-        base_dir = os.path.dirname(__file__)
-        
+        base_dir = self.resource_base_path()
+
         filename = "dark.qss" if theme_name == "Dark" else "light.qss"
-        file_path = os.path.join(base_dir, "data", "styles", filename)
-        
-        if os.path.exists(file_path):
+        file_path = base_dir / "data" / "styles" / filename
+
+        if file_path.exists():
             try:
-                with open(file_path, "r") as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     style_data = f.read()
                     self.setStyleSheet(style_data)
-                    print(f"Successfully loaded {theme_name} theme.") 
+                    print(f"Successfully loaded {theme_name} theme.")
             except Exception as e:
                 print(f"Error reading stylesheet: {e}")
         else:
             print(f"Warning: Stylesheet not found at {file_path}")
-            self.setStyleSheet("") 
-    
+            self.setStyleSheet("")
+
     def get_settings_path(self):
-        """Helper to find src/data/settings.json"""
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        return os.path.join(base_dir, "data", "settings.json")
+        config_dir = Path(
+            QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppLocalDataLocation)
+            or Path.home() / ".config" / "nvx_editor"
+        )
+        config_dir.mkdir(parents=True, exist_ok=True)
+        return config_dir / "settings.json"
 
     def load_settings_from_json(self):
         path = self.get_settings_path()
@@ -275,8 +286,8 @@ class App(QMainWindow):
         }
         try:
             settings_path = self.get_settings_path()
-            os.makedirs(os.path.dirname(settings_path), exist_ok=True)
-            with open(settings_path, 'w') as f:
+            settings_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(settings_path, 'w', encoding='utf-8') as f:
                 json.dump(config, f, indent=4)
         except Exception as e:
             print(f"Error saving settings: {e}")
