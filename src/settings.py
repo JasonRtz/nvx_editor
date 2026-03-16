@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QDialog, QFormLayout, QLineEdit, QComboBox, QDialogButtonBox, QSpinBox, QVBoxLayout
+from PyQt6.QtWidgets import QDialog, QFormLayout, QLineEdit, QComboBox, QDialogButtonBox, QPushButton, QSpinBox, QVBoxLayout
 
 class Settings(QDialog):
     def __init__(self, current_font, current_size, current_theme, parent=None):
@@ -30,6 +30,10 @@ class Settings(QDialog):
 
         layout.addLayout(form_layout)
 
+        self.reset_btn = QPushButton("Reset to Defaults")
+        self.reset_btn.clicked.connect(self.reset_defaults)
+        layout.addWidget(self.reset_btn)
+
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | 
             QDialogButtonBox.StandardButton.Cancel
@@ -37,3 +41,9 @@ class Settings(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+
+    def reset_defaults(self):
+        self.font_combo.setCurrentText("Courier New")
+        self.font_size_spin.setValue(12)
+        self.theme_combo.setCurrentText("Light")
+        self.tab_size.setText("4")

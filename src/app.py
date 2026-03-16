@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import (QDialog, QMainWindow, QTextEdit, QFileDialog, QMess
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QFont
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 from .settings import Settings
+import json
 
 class App(QMainWindow):
     def __init__(self):
@@ -15,6 +16,9 @@ class App(QMainWindow):
         self.editor = QTextEdit()
         self.setCentralWidget(self.editor)
         self.current_file = None
+
+        # Load persisted settings (theme, font, etc.) on startup
+        self.load_settings_from_json()
 
         icon_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "data", "icons", "nvx_editor.png"))
 
@@ -240,6 +244,62 @@ class App(QMainWindow):
         else:
             print(f"Warning: Stylesheet not found at {file_path}")
             self.setStyleSheet("") 
+    
+    def get_settings_path(self):
+        """Helper to find src/data/settings.json"""
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        return os.path.join(base_dir, "data", "settings.json")
+
+    def load_settings_from_json(self):
+        path = self.get_settings_path()
+        if os.path.exists(path):
+            try:
+                with open(path, 'r') as f:
+                    config = json.load(f)
+                
+                family = config.get("font_family", "Courier New")
+                size = config.get("font_size", 12)
+                self.editor.setFont(QFont(family, size))
+                
+                self.current_theme = config.get("theme", "Light")
+                self.load_theme(self.current_theme)
+                
+                print(f"Settings loaded successfully from {path}")
+            except Exception as e:
+                print(f"Error loading settings: {e}")
+
+    def save_settings_to_json(self, font, size, theme):
+        config = {
+            "font_family": font,
+            "font_size": size,
+            "theme": theme
+        }
+        try:
+            settings_path = self.get_settings_path()
+            os.makedirs(os.path.dirname(settings_path), exist_ok=True)
+            with open(settings_path, 'w') as f:
+                json.dump(config, f, indent=4)
+        except Exception as e:
+            print(f"Error saving settings: {e}")
+    
+    def reset_to_defaults(self, dialog):
+        path = self.get_settings_path()
+        
+        if os.path.exists(path):
+            try:
+                os.remove(path)
+                print("Settings file deleted. Reverting to defaults.")
+            except Exception as e:
+                print(f"Error deleting settings: {e}")
+
+        default_font = "Courier New"
+        default_size = 12
+        self.current_theme = "Light"
+        
+        self.editor.setFont(QFont(default_font, default_size))
+        self.load_theme(self.current_theme)
+        
+        dialog.accept()
 
     def show_settings(self):
         current_font = self.editor.font().family()
@@ -247,10 +307,15 @@ class App(QMainWindow):
 
         dialog = Settings(current_font, current_size, self.current_theme, self)
         
+        dialog.reset_btn.clicked.connect(lambda: self.reset_to_defaults(dialog))
+
         if dialog.exec() == QDialog.DialogCode.Accepted:
             new_font = dialog.font_combo.currentText()
             new_size = dialog.font_size_spin.value()
-            self.editor.setFont(QFont(new_font, new_size))
+            new_theme = dialog.theme_combo.currentText()
             
-            self.current_theme = dialog.theme_combo.currentText()
+            self.editor.setFont(QFont(new_font, new_size))
+            self.current_theme = new_theme
             self.load_theme(self.current_theme)
+            
+            self.save_settings_to_json(new_font, new_size, new_theme)
