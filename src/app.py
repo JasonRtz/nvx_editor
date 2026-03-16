@@ -3,7 +3,7 @@ import os
 from PyQt6.QtWidgets import (QDialog, QMainWindow, QTextEdit, QFileDialog, QMessageBox)
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QFont
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
-from settings import Settings
+from .settings import Settings
 
 class App(QMainWindow):
     def __init__(self):
@@ -16,7 +16,7 @@ class App(QMainWindow):
         self.setCentralWidget(self.editor)
         self.current_file = None
 
-        icon_path = os.path.normpath(os.path.join(os.path.dirname(__file__), ".", "nvx_editor.png"))
+        icon_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "data", "icons", "nvx_editor.png"))
 
         try:
             icon = QIcon(icon_path)
@@ -227,7 +227,7 @@ class App(QMainWindow):
         base_dir = os.path.dirname(__file__)
         
         filename = "dark.qss" if theme_name == "Dark" else "light.qss"
-        file_path = os.path.join(base_dir, filename)
+        file_path = os.path.join(base_dir, "data", "styles", filename)
         
         if os.path.exists(file_path):
             try:
