@@ -1,1 +1,32 @@
-/*Default*/
+/* light.qss */
+QWidget {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+QTextEdit {
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid #dcdcdc;
+}
+
+QMenuBar {
+    background-color: #f0f0f0;
+    color: #000000;
+}
+
+QMenuBar::item:selected {
+    background-color: #e5e5e5;
+    color: #000000;
+}
+
+QMenu {
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid #dcdcdc;
+}
+
+QMenu::item:selected {
+    background-color: #0078d7;
+    color: #ffffff;
+}

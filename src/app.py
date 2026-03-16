@@ -3,7 +3,7 @@ import sys
 import json
 from pathlib import Path
 from PyQt6.QtCore import QStandardPaths
-from PyQt6.QtWidgets import (QDialog, QMainWindow, QTextEdit, QFileDialog, QMessageBox)
+from PyQt6.QtWidgets import (QApplication, QDialog, QMainWindow, QTextEdit, QFileDialog, QMessageBox)
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QFont
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 from .settings import Settings
@@ -236,22 +236,28 @@ class App(QMainWindow):
     
     def load_theme(self, theme_name):
         base_dir = self.resource_base_path()
-
         filename = "dark.qss" if theme_name == "Dark" else "light.qss"
         file_path = base_dir / "data" / "styles" / filename
+
+        app = QApplication.instance()
+        
+        # 1. Clear existing styles to prevent Dark Mode bleeding into Light Mode
+        app.setStyleSheet("")
+
+        if theme_name == "Light":
+            # 2. Force Fusion style to reset native Windows dark attributes
+            app.setStyle("Fusion") 
+            app.setPalette(app.style().standardPalette())
 
         if file_path.exists():
             try:
                 with open(file_path, "r", encoding="utf-8") as f:
                     style_data = f.read()
-                    self.setStyleSheet(style_data)
-                    print(f"Successfully loaded {theme_name} theme.")
+                    # 3. Apply to the whole App instance
+                    app.setStyleSheet(style_data)
             except Exception as e:
                 print(f"Error reading stylesheet: {e}")
-        else:
-            print(f"Warning: Stylesheet not found at {file_path}")
-            self.setStyleSheet("")
-
+                
     def get_settings_path(self):
         config_dir = Path(
             QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppLocalDataLocation)
