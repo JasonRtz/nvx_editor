@@ -15,7 +15,7 @@ class Settings(QDialog):
         form_layout.addRow("Editor Font:", self.font_combo)
 
         self.font_size_spin = QSpinBox()
-        self.font_size_spin.setRange(6, 72)  # Minimum and maximum font size
+        self.font_size_spin.setRange(6, 72)  
         self.font_size_spin.setValue(current_size)
         form_layout.addRow("Editor Font Size:", self.font_size_spin)
 

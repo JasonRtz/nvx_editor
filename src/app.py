@@ -1,4 +1,3 @@
-import sys
 import os
 from PyQt6.QtWidgets import (QDialog, QMainWindow, QTextEdit, QFileDialog, QMessageBox)
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QFont
@@ -17,7 +16,6 @@ class App(QMainWindow):
         self.setCentralWidget(self.editor)
         self.current_file = None
 
-        # Load persisted settings (theme, font, etc.) on startup
         self.load_settings_from_json()
 
         icon_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "data", "icons", "nvx_editor.png"))
@@ -127,7 +125,8 @@ class App(QMainWindow):
         QMessageBox.about(self, "About NVX Editor",
                             "NVX Text Editor\n"
                             "Built with Python and Qt\n"
-                            "Version 0.1"
+                            "Created by Jason Rexhaj\n"
+                            "Version 0.2"
         )
 
     def closeEvent(self, event):
