@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from PyQt6.QtCore import QStandardPaths
 from PyQt6.QtWidgets import (QApplication, QDialog, QInputDialog, QMainWindow, QTextEdit, QFileDialog, QMessageBox, QLabel)
-from PyQt6.QtGui import QAction, QIcon, QKeySequence, QFont, QTextCursor
+from PyQt6.QtGui import QAction, QColor, QIcon, QKeySequence, QFont, QTextCursor, QTextFormat
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 from .settings import Settings
 
@@ -175,7 +175,7 @@ class App(QMainWindow):
         
         self.status_label.setText(f"Line: {line}, Col: {col} | Characters: {char_count}")
 
-    def about_dialog(self, event):
+    def about_dialog(self):
         QMessageBox.about(self, "About NVX Editor",
                             "NVX Text Editor\n"
                             "Built with Python and Qt\n"
@@ -240,7 +240,7 @@ class App(QMainWindow):
     
     def file_save_as(self):
         # Save document to a new filename; supports .txt and .pdf through print pipeline.
-        path, selected_filter = QFileDialog.getSaveFileName(
+        path, _ = QFileDialog.getSaveFileName(
             self,
             "Save File As",
             "",
@@ -271,12 +271,12 @@ class App(QMainWindow):
 
     def print_file(self):
         printer = QPrinter(QPrinter.PrinterMode.HighResolution)
-    
+
         dialog = QPrintDialog(printer, self)
-    
+
         if dialog.exec() == QPrintDialog.DialogCode.Accepted:
-            self.editor.print_(printer)
-    
+            self.editor.print(printer)
+
     def handle_delete(self):
         cursor = self.editor.textCursor()
         if cursor.hasSelection():
@@ -302,6 +302,7 @@ class App(QMainWindow):
                 
             if not found:
                 QMessageBox.information(self, "Find", f"'{text}' not found.")
+    
 
     def load_theme(self, theme_name):
         # Load light or dark style sheet from disk and apply to QApplication.
@@ -350,6 +351,10 @@ class App(QMainWindow):
                 family = config.get("font_family", "Sans-Serif")
                 size = config.get("font_size", 12)
                 self.editor.setFont(QFont(family, size))
+
+                tab_spacing = config.get("tab_spacing", 4)
+                space_width = self.editor.fontMetrics().horizontalAdvance(' ')
+                self.editor.setTabStopDistance(int(tab_spacing) * space_width)
                 
                 self.current_theme = config.get("theme", "Light")
                 self.load_theme(self.current_theme)
@@ -358,17 +363,17 @@ class App(QMainWindow):
             except Exception as e:
                 print(f"Error loading settings: {e}")
 
-    def save_settings_to_json(self, font, size, theme):
+    def save_settings_to_json(self, font, size, theme, tab_spacing):
         config = {
             "font_family": font,
             "font_size": size,
-            "theme": theme
+            "theme": theme,
+            "tab_spacing": tab_spacing
         }
         try:
             settings_path = self.get_settings_path()
             with open(settings_path, 'w', encoding='utf-8') as f:
                 json.dump(config, f, indent=4)
-            print(f"Settings saved successfully")
         except Exception as e:
             print(f"Error saving settings: {e}")
     
@@ -414,12 +419,16 @@ class App(QMainWindow):
         # Apply Editor settings
         self.editor.setFont(QFont(new_font, new_size))
 
-        tab_stop = int(dialog.tab_size.text() or 4)
-        self.editor.setTabStopDistance(tab_stop * 20)
-        
+        try:
+            tab_stop = int(dialog.tab_size.text() or 4)
+        except ValueError:
+            tab_stop = 4
+
+        space_width = self.editor.fontMetrics().horizontalAdvance(' ')
+        self.editor.setTabStopDistance(tab_stop * space_width)
+
         if new_theme != self.current_theme:
             self.current_theme = new_theme
             self.load_theme(self.current_theme)
         
-        # Save only the 3 core settings
-        self.save_settings_to_json(new_font, new_size, new_theme)
+        self.save_settings_to_json(new_font, new_size, new_theme, tab_stop)
