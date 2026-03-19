@@ -38,10 +38,15 @@ class Settings(QDialog):
 
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | 
-            QDialogButtonBox.StandardButton.Cancel
+            QDialogButtonBox.StandardButton.Cancel |
+            QDialogButtonBox.StandardButton.Apply
         )
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
+        
+        # Expose the apply button so the main app can connect to it
+        self.apply_button = buttons.button(QDialogButtonBox.StandardButton.Apply)
+
         layout.addWidget(buttons)
 
     def reset_defaults(self):

@@ -286,10 +286,13 @@ class App(QMainWindow):
                 print(f"Error reading stylesheet: {e}")
                 
     def get_settings_path(self):
-        config_dir = Path(
-            QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppLocalDataLocation)
-            or Path.home() / ".config" / "nvx_editor"
-        )
+        # Avoid QStandardPaths returning a confusing main.py app path in some environments.
+        fallback = Path.home() / ".config" / "nvx_editor"
+
+        config_dir = Path(QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppLocalDataLocation) or "")
+        if not config_dir or config_dir.name == "main.py" or config_dir.is_file():
+            config_dir = fallback
+
         config_dir.mkdir(parents=True, exist_ok=True)
         return config_dir / "settings.json"
 
@@ -322,6 +325,8 @@ class App(QMainWindow):
             settings_path.parent.mkdir(parents=True, exist_ok=True)
             with open(settings_path, 'w', encoding='utf-8') as f:
                 json.dump(config, f, indent=4)
+
+            print(f"Settings saved successfully to {settings_path}")
         except Exception as e:
             print(f"Error saving settings: {e}")
     
@@ -351,14 +356,26 @@ class App(QMainWindow):
         dialog = Settings(current_font, current_size, self.current_theme, self)
         
         dialog.reset_btn.clicked.connect(lambda: self.reset_to_defaults(dialog))
+        
+        # Connect Apply button to apply logic while dialog stays open
+        if hasattr(dialog, 'apply_button') and dialog.apply_button is not None:
+            dialog.apply_button.clicked.connect(lambda: self.apply_settings_from_dialog(dialog))
 
         if dialog.exec() == QDialog.DialogCode.Accepted:
-            new_font = dialog.font_combo.currentText()
-            new_size = dialog.font_size_spin.value()
-            new_theme = dialog.theme_combo.currentText()
-            
-            self.editor.setFont(QFont(new_font, new_size))
+            self.apply_settings_from_dialog(dialog)
+
+    def apply_settings_from_dialog(self, dialog):
+        # Extract values from UI and apply to the editor and config file
+        new_font = dialog.font_combo.currentText()
+        new_size = dialog.font_size_spin.value()
+        new_theme = dialog.theme_combo.currentText()
+        
+        # 1. Apply to live UI
+        self.editor.setFont(QFont(new_font, new_size))
+        
+        if new_theme != self.current_theme:
             self.current_theme = new_theme
             self.load_theme(self.current_theme)
-            
-            self.save_settings_to_json(new_font, new_size, new_theme)
+        
+        # 2. Persist to disk
+        self.save_settings_to_json(new_font, new_size, new_theme)
