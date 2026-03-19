@@ -378,7 +378,7 @@ class App(QMainWindow):
                 size = config.get("font_size", 12)
                 self.editor.setFont(QFont(family, size))
 
-                tab_spacing = config.get("tab_spacing", 4)
+                tab_spacing = int(config.get("tab_spacing", 4))
                 space_width = self.editor.fontMetrics().horizontalAdvance(' ')
                 self.editor.setTabStopDistance(int(tab_spacing) * space_width)
                 
@@ -426,9 +426,10 @@ class App(QMainWindow):
         current_font = self.editor.font().family()
         current_size = self.editor.font().pointSize()
 
-        # Reverted to 4 arguments
-        dialog = Settings(current_font, current_size, self.current_theme, self)
-        
+        current_tab = self.editor.tabStopDistance() / self.editor.fontMetrics().horizontalAdvance(' ')
+
+
+        dialog = Settings(current_font, current_size, self.current_theme, int(current_tab), self)
         dialog.reset_btn.clicked.connect(lambda: self.reset_to_defaults(dialog))
         
         if hasattr(dialog, 'apply_button') and dialog.apply_button is not None:
@@ -450,6 +451,8 @@ class App(QMainWindow):
         except ValueError:
             tab_stop = 4
 
+        tab_val = tab_stop
+
         space_width = self.editor.fontMetrics().horizontalAdvance(' ')
         self.editor.setTabStopDistance(tab_stop * space_width)
 
@@ -457,4 +460,4 @@ class App(QMainWindow):
             self.current_theme = new_theme
             self.load_theme(self.current_theme)
         
-        self.save_settings_to_json(new_font, new_size, new_theme, tab_stop)
+        self.save_settings_to_json(new_font, new_size, new_theme, tab_val)

@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QDialog, QFormLayout, QLineEdit, QComboBox, QDialogB
 
 class Settings(QDialog):
     # Settings dialog for editor font, size, theme, and tab spacing.
-    def __init__(self, current_font, current_size, current_theme, parent=None):
+    def __init__(self, current_font, current_size, current_theme, current_tab, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Settings")
         self.setModal(True)
@@ -36,7 +36,7 @@ class Settings(QDialog):
 
         # Tab Spacing
         self.tab_size = QLineEdit()
-        self.tab_size.setPlaceholderText("4")
+        self.tab_size.setText(str(current_tab))
         form_layout.addRow("Tab Spacing:", self.tab_size)
 
         layout.addLayout(form_layout)
