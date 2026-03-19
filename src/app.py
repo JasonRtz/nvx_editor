@@ -63,6 +63,12 @@ class App(QMainWindow):
         file_menu = menu_bar.addMenu("&File")
         
         #File actions
+
+        new_action = QAction("&New", self)
+        new_action.setShortcut("Ctrl+N")
+        new_action.triggered.connect(self.new_file)
+        
+
         open_action = QAction("&Open", self)
         open_action.setShortcut("Ctrl+O")
         open_action.triggered.connect(self.file_open)
@@ -83,6 +89,7 @@ class App(QMainWindow):
         exit_action.setShortcut("Ctrl+Q")
         exit_action.triggered.connect(self.close)
 
+        file_menu.addAction(new_action)
         file_menu.addAction(open_action)
         file_menu.addAction(save_action)
         file_menu.addAction(save_as_action)
@@ -203,6 +210,25 @@ class App(QMainWindow):
                 event.ignore()
         else:
             event.accept() 
+    
+    def new_file(self):
+        if self.editor.document().isModified():
+            reply = QMessageBox.question(
+                self, 'Save Changes?',
+                "Save current file before creating a new one?",
+                QMessageBox.StandardButton.Save |
+                QMessageBox.StandardButton.Discard |
+                QMessageBox.StandardButton.Cancel
+            )
+
+            if reply == QMessageBox.StandardButton.Save:
+                self.file_save()
+            elif reply == QMessageBox.StandardButton.Cancel:
+                return
+
+        self.editor.clear()
+        self.current_file = None
+        self.setWindowTitle("NVX Editor")
 
     def file_open(self):
         # Open a text file from filesystem using standard dialog.
