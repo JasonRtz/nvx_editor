@@ -3,7 +3,7 @@ import sys
 import json
 from pathlib import Path
 from PyQt6.QtCore import QStandardPaths
-from PyQt6.QtWidgets import (QApplication, QDialog, QInputDialog, QMainWindow, QTextEdit, QFileDialog, QMessageBox)
+from PyQt6.QtWidgets import (QApplication, QDialog, QInputDialog, QMainWindow, QTextEdit, QFileDialog, QMessageBox, QLabel)
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QFont, QTextCursor
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 from .settings import Settings
@@ -50,6 +50,12 @@ class App(QMainWindow):
 
         # Build UI menus and actions
         self.view()
+
+        self.status_bar = self.statusBar()
+        self.status_label = QLabel("Line: 1, Col: 1 | Characters: 0")
+        self.status_bar.addPermanentWidget(self.status_label)
+
+        self.editor.cursorPositionChanged.connect(self.update_status_bar)
 
     def view(self):
         menu_bar = self.menuBar()
@@ -150,6 +156,7 @@ class App(QMainWindow):
         
         view_menu.addAction(zoom_in_action)
         view_menu.addAction(zoom_out_action)
+        view_menu.addSeparator()
         view_menu.addAction(full_screen_action)
 
         help_menu = menu_bar.addMenu("&Help")
@@ -160,6 +167,14 @@ class App(QMainWindow):
         about_action.triggered.connect(self.about_dialog)
         help_menu.addAction(about_action)
     
+    def update_status_bar(self):
+        cursor = self.editor.textCursor()
+        line = cursor.blockNumber() + 1
+        col = cursor.columnNumber() + 1
+        char_count = len(self.editor.toPlainText())
+        
+        self.status_label.setText(f"Line: {line}, Col: {col} | Characters: {char_count}")
+
     def about_dialog(self, event):
         QMessageBox.about(self, "About NVX Editor",
                             "NVX Text Editor\n"
@@ -331,6 +346,7 @@ class App(QMainWindow):
                 with open(path, 'r') as f:
                     config = json.load(f)
                 
+                # Only load Editor font and Theme
                 family = config.get("font_family", "Sans-Serif")
                 size = config.get("font_size", 12)
                 self.editor.setFont(QFont(family, size))
@@ -350,11 +366,9 @@ class App(QMainWindow):
         }
         try:
             settings_path = self.get_settings_path()
-            settings_path.parent.mkdir(parents=True, exist_ok=True)
             with open(settings_path, 'w', encoding='utf-8') as f:
                 json.dump(config, f, indent=4)
-
-            print(f"Settings saved successfully to {settings_path}")
+            print(f"Settings saved successfully")
         except Exception as e:
             print(f"Error saving settings: {e}")
     
@@ -368,7 +382,7 @@ class App(QMainWindow):
             except Exception as e:
                 print(f"Error deleting settings: {e}")
 
-        default_font = "Courier New"
+        default_font = "Sans-Serif"
         default_size = 12
         self.current_theme = "Light"
         
@@ -381,11 +395,11 @@ class App(QMainWindow):
         current_font = self.editor.font().family()
         current_size = self.editor.font().pointSize()
 
+        # Reverted to 4 arguments
         dialog = Settings(current_font, current_size, self.current_theme, self)
         
         dialog.reset_btn.clicked.connect(lambda: self.reset_to_defaults(dialog))
         
-        # Connect Apply button to apply logic while dialog stays open
         if hasattr(dialog, 'apply_button') and dialog.apply_button is not None:
             dialog.apply_button.clicked.connect(lambda: self.apply_settings_from_dialog(dialog))
 
@@ -393,12 +407,11 @@ class App(QMainWindow):
             self.apply_settings_from_dialog(dialog)
 
     def apply_settings_from_dialog(self, dialog):
-        # Extract values from UI and apply to the editor and config file
         new_font = dialog.font_combo.currentText()
         new_size = dialog.font_size_spin.value()
         new_theme = dialog.theme_combo.currentText()
         
-        # 1. Apply to live UI
+        # Apply Editor settings
         self.editor.setFont(QFont(new_font, new_size))
 
         tab_stop = int(dialog.tab_size.text() or 4)
@@ -408,5 +421,5 @@ class App(QMainWindow):
             self.current_theme = new_theme
             self.load_theme(self.current_theme)
         
-        # 2. Persist to disk
+        # Save only the 3 core settings
         self.save_settings_to_json(new_font, new_size, new_theme)

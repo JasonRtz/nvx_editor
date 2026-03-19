@@ -6,6 +6,10 @@ from src.app import App
 def main():
     os.environ["QT_AUTOSCREENSCALE_FACTOR"] = "1"
     app = QApplication(sys.argv)
+
+    app.setOrganizationName("NVX")
+    app.setApplicationName("NVXEditor")
+
     window = App()
     window.show()
     sys.exit(app.exec())
