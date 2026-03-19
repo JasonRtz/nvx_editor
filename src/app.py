@@ -331,7 +331,7 @@ class App(QMainWindow):
                 with open(path, 'r') as f:
                     config = json.load(f)
                 
-                family = config.get("font_family", "Courier New")
+                family = config.get("font_family", "Sans-Serif")
                 size = config.get("font_size", 12)
                 self.editor.setFont(QFont(family, size))
                 
@@ -400,6 +400,9 @@ class App(QMainWindow):
         
         # 1. Apply to live UI
         self.editor.setFont(QFont(new_font, new_size))
+
+        tab_stop = int(dialog.tab_size.text() or 4)
+        self.editor.setTabStopDistance(tab_stop * 20)
         
         if new_theme != self.current_theme:
             self.current_theme = new_theme

@@ -12,7 +12,14 @@ class Settings(QDialog):
         form_layout = QFormLayout()
 
         self.font_combo = QComboBox()
-        self.font_combo.addItems(["Courier New", "Arial", "Verdana", "Times New Roman"])
+        self.font_combo.addItems([
+            "Sans-Serif", 
+            "Serif", 
+            "Monospace",
+            "System-UI", 
+            "Liberation Mono", 
+            "DejaVu Sans Mono"
+        ])
         self.font_combo.setCurrentText(current_font)
         form_layout.addRow("Editor Font:", self.font_combo)
 

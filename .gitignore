@@ -16,4 +16,5 @@ dist/
 .vscode/
 .idea/
 
+#etc
 .building_process
