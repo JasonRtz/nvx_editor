@@ -8,24 +8,34 @@ from PyQt6.QtGui import QAction, QIcon, QKeySequence, QFont
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 from .settings import Settings
 
+# NVX Editor application main window class.
+# Manages file operations, edit actions, view actions, print, and settings persistence.
 class App(QMainWindow):
     def resource_base_path(self):
+        # Determine the path to bundled assets for both dev and frozen exe.
+        # When packaged with PyInstaller, Qt app resources are extracted to
+        # a temporary folder and sys._MEIPASS is set. This returns that path.
+        # Otherwise, returns the directory of this source file.
         if getattr(sys, '_MEIPASS', None):
             return Path(sys._MEIPASS)
         return Path(__file__).resolve().parent
 
     def __init__(self):
+        # Window setup
         super().__init__()
         self.setWindowTitle("NVX Editor")
         self.resize(800, 600)
         self.current_theme = "Light"
 
+        # Editor widget as central widget
         self.editor = QTextEdit()
         self.setCentralWidget(self.editor)
         self.current_file = None
 
+        # Load saved settings (font + theme) from disk (if present)
         self.load_settings_from_json()
 
+        # Application icon (.exe bundling via PyInstaller may set _MEIPASS)
         icon_path = os.path.normpath(str(self.resource_base_path() / "data" / "icons" / "nvx_editor.png"))
 
         try:
@@ -38,6 +48,7 @@ class App(QMainWindow):
         except Exception as e:
             print(f"Could not set window icon ({icon_path}): {e}")
 
+        # Build UI menus and actions
         self.view()
 
     def view(self):
@@ -117,9 +128,14 @@ class App(QMainWindow):
         zoom_out_action = QAction("&Zoom Out", self)
         zoom_out_action.setShortcut("Ctrl+-")
         zoom_out_action.triggered.connect(self.editor.zoomOut) 
+
+        full_screen_action = QAction("&Full Screen", self)
+        full_screen_action.setShortcut("F11")
+        full_screen_action.triggered.connect(self.toggle_full_screen)
         
         view_menu.addAction(zoom_in_action)
         view_menu.addAction(zoom_out_action)
+        view_menu.addAction(full_screen_action)
 
         help_menu = menu_bar.addMenu("&Help")
         
@@ -159,6 +175,8 @@ class App(QMainWindow):
             event.accept() 
 
     def file_open(self):
+        # Open a text file from filesystem using standard dialog.
+        # Sets editor contents and current file path.
         path, _ = QFileDialog.getOpenFileName(self, "Open File", "", 
                                              "Text File (*.txt);;All Files (*)")
         if path:
@@ -172,6 +190,7 @@ class App(QMainWindow):
                 QMessageBox.critical(self, "Error", f"Could not open file: {e}")
 
     def file_save(self):
+        # Save current document; if not yet named, open Save As dialog.
         if not self.current_file:
             path, _ = QFileDialog.getSaveFileName(self, "Save File", "", 
                                                  "Text File (*.txt);;All Files (*)")
@@ -190,6 +209,7 @@ class App(QMainWindow):
             QMessageBox.critical(self, "Error", f"Could not save file: {e}")
     
     def file_save_as(self):
+        # Save document to a new filename; supports .txt and .pdf through print pipeline.
         path, selected_filter = QFileDialog.getSaveFileName(
             self,
             "Save File As",
@@ -234,7 +254,14 @@ class App(QMainWindow):
         else:
             cursor.deleteChar()
     
+    def toggle_full_screen(self):
+        if self.isFullScreen():
+            self.showNormal()
+        else:
+            self.showFullScreen()
+    
     def load_theme(self, theme_name):
+        # Load light or dark style sheet from disk and apply to QApplication.
         base_dir = self.resource_base_path()
         filename = "dark.qss" if theme_name == "Dark" else "light.qss"
         file_path = base_dir / "data" / "styles" / filename
@@ -245,7 +272,7 @@ class App(QMainWindow):
         app.setStyleSheet("")
 
         if theme_name == "Light":
-            # 2. Force Fusion style to reset native Windows dark attributes
+            # 2. Force Fusion style to reset native OS style artifacts
             app.setStyle("Fusion") 
             app.setPalette(app.style().standardPalette())
 
@@ -253,7 +280,7 @@ class App(QMainWindow):
             try:
                 with open(file_path, "r", encoding="utf-8") as f:
                     style_data = f.read()
-                    # 3. Apply to the whole App instance
+                    # 3. Apply theme sheet globally across the app
                     app.setStyleSheet(style_data)
             except Exception as e:
                 print(f"Error reading stylesheet: {e}")

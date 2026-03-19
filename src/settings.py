@@ -1,6 +1,8 @@
 from PyQt6.QtWidgets import QDialog, QFormLayout, QLineEdit, QComboBox, QDialogButtonBox, QPushButton, QSpinBox, QVBoxLayout
 
 class Settings(QDialog):
+    # Settings dialog for editor font, size, theme, and tab spacing.
+    # Uses QDialog buttons to accept or cancel changes.
     def __init__(self, current_font, current_size, current_theme, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Settings")
@@ -43,6 +45,7 @@ class Settings(QDialog):
         layout.addWidget(buttons)
 
     def reset_defaults(self):
+        # Switch UI values back to safe defaults.
         self.font_combo.setCurrentText("Courier New")
         self.font_size_spin.setValue(12)
         self.theme_combo.setCurrentText("Light")

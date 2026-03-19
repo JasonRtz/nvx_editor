@@ -1,7 +1,7 @@
-from src.app import App
-from PyQt6.QtWidgets import QApplication
 import sys
 import os
+from PyQt6.QtWidgets import QApplication
+from src.app import App
 
 def main():
     os.environ["QT_AUTOSCREENSCALE_FACTOR"] = "1"
