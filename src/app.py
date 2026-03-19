@@ -3,8 +3,8 @@ import sys
 import json
 from pathlib import Path
 from PyQt6.QtCore import QStandardPaths
-from PyQt6.QtWidgets import (QApplication, QDialog, QMainWindow, QTextEdit, QFileDialog, QMessageBox)
-from PyQt6.QtGui import QAction, QIcon, QKeySequence, QFont
+from PyQt6.QtWidgets import (QApplication, QDialog, QInputDialog, QMainWindow, QTextEdit, QFileDialog, QMessageBox)
+from PyQt6.QtGui import QAction, QIcon, QKeySequence, QFont, QTextCursor
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 from .settings import Settings
 
@@ -53,7 +53,7 @@ class App(QMainWindow):
 
     def view(self):
         menu_bar = self.menuBar()
-        
+
         file_menu = menu_bar.addMenu("&File")
         
         #File actions
@@ -86,6 +86,14 @@ class App(QMainWindow):
         
         edit_menu = menu_bar.addMenu("&Edit")
 
+        undo_action = QAction("&Undo",self)
+        undo_action.setShortcut("Ctrl+Z")
+        undo_action.triggered.connect(self.editor.undo)
+
+        redo_action = QAction("&Redo",self)
+        redo_action.setShortcut("Ctrl+Y")
+        redo_action.triggered.connect(self.editor.redo)
+
         cut_action = QAction("&Cut", self)
         cut_action.setShortcut("Ctrl+X")
         cut_action.triggered.connect(self.editor.cut)
@@ -102,6 +110,10 @@ class App(QMainWindow):
         delete_action.setShortcut(QKeySequence.StandardKey.Delete)
         delete_action.triggered.connect(self.handle_delete)
 
+        find_action = QAction("&Find",self)
+        find_action.setShortcut("Ctrl+F")
+        find_action.triggered.connect(self.find_text)
+
         select_all_action = QAction("&Select All", self)
         select_all_action.setShortcut("Ctrl+A")
         select_all_action.triggered.connect(self.editor.selectAll)
@@ -109,10 +121,13 @@ class App(QMainWindow):
         settings_action = QAction("&Settings",self)
         settings_action.triggered.connect(self.show_settings)
 
+        edit_menu.addAction(undo_action)
+        edit_menu.addAction(redo_action)
         edit_menu.addAction(cut_action)
         edit_menu.addAction(copy_action)
         edit_menu.addAction(paste_action)
         edit_menu.addAction(delete_action)
+        edit_menu.addAction(find_action)
         edit_menu.addAction(select_all_action)
         edit_menu.addSeparator()
         edit_menu.addAction(settings_action)
@@ -128,7 +143,7 @@ class App(QMainWindow):
         zoom_out_action = QAction("&Zoom Out", self)
         zoom_out_action.setShortcut("Ctrl+-")
         zoom_out_action.triggered.connect(self.editor.zoomOut) 
-
+        
         full_screen_action = QAction("&Full Screen", self)
         full_screen_action.setShortcut("F11")
         full_screen_action.triggered.connect(self.toggle_full_screen)
@@ -260,6 +275,19 @@ class App(QMainWindow):
         else:
             self.showFullScreen()
     
+    def find_text(self):
+        text, ok = QInputDialog.getText(self, "Find", "Search for:")
+        
+        if ok and text:
+            found = self.editor.find(text)
+            
+            if not found:
+                self.editor.moveCursor(QTextCursor.MoveOperation.Start)
+                found = self.editor.find(text)
+                
+            if not found:
+                QMessageBox.information(self, "Find", f"'{text}' not found.")
+
     def load_theme(self, theme_name):
         # Load light or dark style sheet from disk and apply to QApplication.
         base_dir = self.resource_base_path()
