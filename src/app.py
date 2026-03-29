@@ -3,7 +3,7 @@ import sys
 import json
 from pathlib import Path
 from PyQt6.QtCore import QStandardPaths, QUrl
-from PyQt6.QtWidgets import QApplication, QDialog, QInputDialog, QMainWindow, QTextEdit, QMessageBox, QLabel
+from PyQt6.QtWidgets import QApplication, QDialog, QInputDialog, QMainWindow, QTextEdit, QMessageBox, QLabel, QVBoxLayout, QDialogButtonBox
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QFont, QTextCursor, QDesktopServices
 from .settings import Settings
 from .file_manager import File_Manager
@@ -105,7 +105,8 @@ class App(QMainWindow):
 
         #Help Menu
         help_menu = menu_bar.addMenu("&Help")
-        self.add_action(help_menu, "Report Issue", self.report_issue)        
+        self.add_action(help_menu, "&View License", self.view_license)
+        self.add_action(help_menu, "&Report Issue", self.report_issue)
         self.add_action(help_menu, "&About", self.about_dialog)
 
     def add_action(self, menu, text, slot, shortcut=None, checkable=False):
@@ -135,6 +136,38 @@ class App(QMainWindow):
     def report_issue(self):
         # Open the project's GitHub issues page in the default browser.
         QDesktopServices.openUrl(QUrl("https://github.com/JasonRtz/nvx_editor/issues"))
+
+    def view_license(self):
+        license_path = self.resource_base_path() / "LICENSE"
+        if not license_path.exists():
+            license_path = Path(__file__).resolve().parent.parent / "LICENSE"
+
+        if not license_path.exists():
+            QMessageBox.warning(self, "License Not Found", "LICENSE file not found.")
+            return
+
+        try:
+            with open(license_path, 'r', encoding='utf-8') as f:
+                license_text = f.read()
+
+            dlg = QDialog(self)
+            dlg.setWindowTitle("NVX Editor License")
+            dlg.resize(600, 500)
+
+            layout = QVBoxLayout(dlg)
+            editor = QTextEdit(dlg)
+            editor.setReadOnly(True)
+            editor.setPlainText(license_text)
+            layout.addWidget(editor)
+
+            btn_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
+            btn_box.accepted.connect(dlg.accept)
+            layout.addWidget(btn_box)
+
+            dlg.exec()
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Unable to open LICENSE file: {e}")
 
     def closeEvent(self, event):
         self.file_mng.handle_close_event(event)
