@@ -2,11 +2,11 @@ import os
 import sys
 import json
 from pathlib import Path
-from PyQt6.QtCore import QStandardPaths
-from PyQt6.QtWidgets import (QApplication, QDialog, QInputDialog, QMainWindow, QTextEdit, QFileDialog, QMessageBox, QLabel)
-from PyQt6.QtGui import QAction, QColor, QIcon, QKeySequence, QFont, QTextCursor, QTextFormat
-from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
+from PyQt6.QtCore import QStandardPaths, QUrl
+from PyQt6.QtWidgets import QApplication, QDialog, QInputDialog, QMainWindow, QTextEdit, QMessageBox, QLabel
+from PyQt6.QtGui import QAction, QIcon, QKeySequence, QFont, QTextCursor, QDesktopServices
 from .settings import Settings
+from .file_manager import File_Manager
 
 # NVX Editor application main window class.
 # Manages file operations, edit actions, view actions, print, and settings persistence.
@@ -32,11 +32,10 @@ class App(QMainWindow):
         self.setCentralWidget(self.editor)
         self.current_file = None
 
-        # Load saved settings (font + theme) from disk (if present)
-        self.load_settings_from_json()
-
         # Application icon (.exe bundling via PyInstaller may set _MEIPASS)
         icon_path = os.path.normpath(str(self.resource_base_path() / "data" / "icons" / "nvx_editor.png"))
+
+        self.file_mng = File_Manager(self)
 
         try:
             icon = QIcon(icon_path)
@@ -48,8 +47,13 @@ class App(QMainWindow):
         except Exception as e:
             print(f"Could not set window icon ({icon_path}): {e}")
 
-        # Build UI menus and actions
+        self.recent_files = [] 
+
+        # Build UI menus and actions        
         self.view()
+
+        # Load saved settings (font + theme) from disk (if present)
+        self.load_settings_from_json()
 
         self.status_bar = self.statusBar()
         self.status_label = QLabel("Line: 1, Col: 1 | Characters: 0")
@@ -59,126 +63,64 @@ class App(QMainWindow):
 
     def view(self):
         menu_bar = self.menuBar()
-
+        
+        #File Menu
         file_menu = menu_bar.addMenu("&File")
-        
-        #File actions
-
-        new_action = QAction("&New", self)
-        new_action.setShortcut("Ctrl+N")
-        new_action.triggered.connect(self.new_file)
-        
-
-        open_action = QAction("&Open", self)
-        open_action.setShortcut("Ctrl+O")
-        open_action.triggered.connect(self.file_open)
-
-        save_action = QAction("&Save", self)
-        save_action.setShortcut("Ctrl+S")
-        save_action.triggered.connect(self.file_save)
-
-        save_as_action = QAction("Save &As", self)
-        save_as_action.setShortcut("Ctrl+Shift+S")
-        save_as_action.triggered.connect(self.file_save_as)
-
-        print_action = QAction("&Print", self)
-        print_action.setShortcut("Ctrl+P")
-        print_action.triggered.connect(self.print_file)
-
-        exit_action = QAction("&Exit", self)
-        exit_action.setShortcut("Ctrl+Q")
-        exit_action.triggered.connect(self.close)
-
-        file_menu.addAction(new_action)
-        file_menu.addAction(open_action)
-        file_menu.addAction(save_action)
-        file_menu.addAction(save_as_action)
-        file_menu.addAction(print_action)
+        self.add_action(file_menu, "&New", self.file_mng.new_file, "Ctrl+N")
         file_menu.addSeparator()
-        file_menu.addAction(exit_action)
+        self.add_action(file_menu, "&Open", self.file_mng.file_open, "Ctrl+O")
+        self.recent_menu = file_menu.addMenu("&Recent")
+        file_menu.addSeparator()
+        self.add_action(file_menu, "&Save", self.file_mng.file_save, "Ctrl+S")
+        self.add_action(file_menu, "&Save As", self.file_mng.file_save_as, "Ctrl+Shift+S")
+        self.add_action(file_menu, "&Print", self.file_mng.print_file, "Ctrl+P")
+        file_menu.addSeparator()
+        self.add_action(file_menu, "&Exit", self.close, "Ctrl+Q")
         
+        #Edit Menu
         edit_menu = menu_bar.addMenu("&Edit")
-
-        undo_action = QAction("&Undo",self)
-        undo_action.setShortcut("Ctrl+Z")
-        undo_action.triggered.connect(self.editor.undo)
-
-        redo_action = QAction("&Redo",self)
-        redo_action.setShortcut("Ctrl+Y")
-        redo_action.triggered.connect(self.editor.redo)
-
-        cut_action = QAction("&Cut", self)
-        cut_action.setShortcut("Ctrl+X")
-        cut_action.triggered.connect(self.editor.cut)
-
-        copy_action = QAction("&Copy", self)
-        copy_action.setShortcut("Ctrl+C")
-        copy_action.triggered.connect(self.editor.copy) 
-
-        paste_action = QAction("&Paste", self)
-        paste_action.setShortcut("Ctrl+V")
-        paste_action.triggered.connect(self.editor.paste)
-
-        delete_action = QAction("&Delete",self)
-        delete_action.setShortcut(QKeySequence.StandardKey.Delete)
-        delete_action.triggered.connect(self.handle_delete)
-
-        find_action = QAction("&Find",self)
-        find_action.setShortcut("Ctrl+F")
-        find_action.triggered.connect(self.find_text)
-
-        select_all_action = QAction("&Select All", self)
-        select_all_action.setShortcut("Ctrl+A")
-        select_all_action.triggered.connect(self.editor.selectAll)
-
-        settings_action = QAction("&Settings",self)
-        settings_action.triggered.connect(self.show_settings)
-
-        edit_menu.addAction(undo_action)
-        edit_menu.addAction(redo_action)
-        edit_menu.addAction(cut_action)
-        edit_menu.addAction(copy_action)
-        edit_menu.addAction(paste_action)
-        edit_menu.addAction(delete_action)
-        edit_menu.addAction(find_action)
-        edit_menu.addAction(select_all_action)
+        self.add_action(edit_menu, "&Undo", self.editor.undo, "Ctrl+Z")
+        self.add_action(edit_menu, "&Redo", self.editor.redo, "Ctrl+Y")
         edit_menu.addSeparator()
-        edit_menu.addAction(settings_action)
+        self.add_action(edit_menu, "&Cut", self.editor.cut, "Ctrl+X")
+        self.add_action(edit_menu, "&Copy", self.editor.copy, "Ctrl+C")
+        self.add_action(edit_menu, "&Paste", self.editor.paste, "Ctrl+V")
+        self.add_action(edit_menu, "&Delete", self.handle_delete, QKeySequence.StandardKey.Delete)
+        edit_menu.addSeparator()
+        self.add_action(edit_menu, "&Find", self.find_text, "Ctrl+F")
+        self.add_action(edit_menu, "&Select All", self.editor.selectAll, "Ctrl+A")
+        edit_menu.addSeparator()
+        self.add_action(edit_menu, "&Settings", self.show_settings)
 
+        #View Menu
         view_menu = menu_bar.addMenu("&View")
-
-        #View actions
-
-        zoom_in_action = QAction("&Zoom In", self)
-        zoom_in_action.setShortcut("Ctrl+=") 
-        zoom_in_action.triggered.connect(self.editor.zoomIn) 
-        
-        zoom_out_action = QAction("&Zoom Out", self)
-        zoom_out_action.setShortcut("Ctrl+-")
-        zoom_out_action.triggered.connect(self.editor.zoomOut) 
-        
-        full_screen_action = QAction("&Full Screen", self)
-        full_screen_action.setShortcut("F11")
-        full_screen_action.triggered.connect(self.toggle_full_screen)
-        
-        view_menu.addAction(zoom_in_action)
-        view_menu.addAction(zoom_out_action)
+        self.add_action(view_menu, "&Zoom In", self.editor.zoomIn, "Ctrl+=")
+        self.add_action(view_menu, "&Zoom Out", self.editor.zoomOut, "Ctrl+-")
+        self.add_action(view_menu, "Word Wrap", 
+                        lambda checked: self.editor.setLineWrapMode(
+                            QTextEdit.LineWrapMode.WidgetWidth if checked else QTextEdit.LineWrapMode.NoWrap),
+                            "Alt+Z", True).setChecked(True)
         view_menu.addSeparator()
-        view_menu.addAction(full_screen_action)
+        self.add_action(view_menu, "&Full Screen", self.toggle_full_screen, "F11")
 
+        #Help Menu
         help_menu = menu_bar.addMenu("&Help")
-        
-        #Help actions
+        self.add_action(help_menu, "Report Issue", self.report_issue)        
+        self.add_action(help_menu, "&About", self.about_dialog)
 
-        about_action = QAction("&About", self)
-        about_action.triggered.connect(self.about_dialog)
-        help_menu.addAction(about_action)
+    def add_action(self, menu, text, slot, shortcut=None, checkable=False):
+        action = QAction(text, self)
+        if shortcut: action.setShortcut(shortcut)
+        if checkable: action.setCheckable(True)
+        action.triggered.connect(slot)
+        menu.addAction(action)
+        return action
     
     def update_status_bar(self):
         cursor = self.editor.textCursor()
         line = cursor.blockNumber() + 1
         col = cursor.columnNumber() + 1
-        char_count = len(self.editor.toPlainText())
+        char_count = self.editor.document().characterCount()
         
         self.status_label.setText(f"Line: {line}, Col: {col} | Characters: {char_count}")
 
@@ -187,121 +129,35 @@ class App(QMainWindow):
                             "NVX Text Editor\n"
                             "Built with Python and Qt\n"
                             "Created by Jason Rexhaj\n"
-                            "Version 0.2"
+                            "Version 1.0"
         )
+
+    def report_issue(self):
+        # Open the project's GitHub issues page in the default browser.
+        QDesktopServices.openUrl(QUrl("https://github.com/JasonRtz/nvx_editor/issues"))
 
     def closeEvent(self, event):
-        if self.editor.document().isModified():
-            reply = QMessageBox.question(
-                self, 'Save Changes?',
-                "You have unsaved changes. Do you want to save them before exiting?",
-                QMessageBox.StandardButton.Save | 
-                QMessageBox.StandardButton.Discard | 
-                QMessageBox.StandardButton.Cancel,
-                QMessageBox.StandardButton.Save
-            )
+        self.file_mng.handle_close_event(event)
 
-            if reply == QMessageBox.StandardButton.Save:
-                self.file_save()
-                event.accept() 
-            elif reply == QMessageBox.StandardButton.Discard:
-                event.accept() 
-            else:
-                event.ignore()
+    def update_recent_actions(self):
+        self.recent_menu.clear()
+        
+        for path in self.recent_files:
+            action = QAction(os.path.basename(path), self)
+            action.setData(path) 
+            # Points to the moved function in file_manager
+            action.triggered.connect(lambda chk, p=path: self.file_mng.open_recent_file(p))
+            self.recent_menu.addAction(action)
+        
+        if not self.recent_files:
+            self.recent_menu.setEnabled(False)
         else:
-            event.accept() 
-    
-    def new_file(self):
-        if self.editor.document().isModified():
-            reply = QMessageBox.question(
-                self, 'Save Changes?',
-                "Save current file before creating a new one?",
-                QMessageBox.StandardButton.Save |
-                QMessageBox.StandardButton.Discard |
-                QMessageBox.StandardButton.Cancel
-            )
-
-            if reply == QMessageBox.StandardButton.Save:
-                self.file_save()
-            elif reply == QMessageBox.StandardButton.Cancel:
-                return
-
-        self.editor.clear()
-        self.current_file = None
-        self.setWindowTitle("NVX Editor")
-
-    def file_open(self):
-        # Open a text file from filesystem using standard dialog.
-        # Sets editor contents and current file path.
-        path, _ = QFileDialog.getOpenFileName(self, "Open File", "", 
-                                             "Text File (*.txt);;All Files (*)")
-        if path:
-            try:
-                with open(path, 'r', encoding='utf-8') as f:
-                    text = f.read()
-                self.editor.setPlainText(text)
-                self.current_file = path
-                self.setWindowTitle(f"NVX Editor - {path}")
-            except Exception as e:
-                QMessageBox.critical(self, "Error", f"Could not open file: {e}")
-
-    def file_save(self):
-        # Save current document; if not yet named, open Save As dialog.
-        if not self.current_file:
-            path, _ = QFileDialog.getSaveFileName(self, "Save File", "", 
-                                                 "Text File (*.txt);;All Files (*)")
-            if not path:
-                return
-            self.current_file = path
-            
-        try:
-            with open(self.current_file, 'w', encoding='utf-8') as f:
-                f.write(self.editor.toPlainText())
-            
-            self.editor.document().setModified(False)
-            
-            self.setWindowTitle(f"NVX Editor - {self.current_file}")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Could not save file: {e}")
-    
-    def file_save_as(self):
-        # Save document to a new filename; supports .txt and .pdf through print pipeline.
-        path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Save File As",
-            "",
-            "Text File (*.txt);;PDF File (*.pdf);;All Files (*)"
-        )
-
-        if not path:
-            return
-
-        try:
-            if path.endswith(".pdf"):
-                printer = QPrinter(QPrinter.PrinterMode.HighResolution)
-                printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
-                printer.setOutputFileName(path)
-
-                self.editor.document().print(printer)
-
-            else:
-                with open(path, 'w', encoding='utf-8') as f:
-                    f.write(self.editor.toPlainText())
-
-            self.current_file = path
-            self.editor.document().setModified(False)
-            self.setWindowTitle(f"NVX Editor - {path}")
-
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Could not save file: {e}")
-
-    def print_file(self):
-        printer = QPrinter(QPrinter.PrinterMode.HighResolution)
-
-        dialog = QPrintDialog(printer, self)
-
-        if dialog.exec() == QPrintDialog.DialogCode.Accepted:
-            self.editor.print(printer)
+            self.recent_menu.setEnabled(True)
+            self.recent_menu.addSeparator()
+            clear_action = QAction("Clear Recently Open", self)
+            # Points to the moved function in file_manager
+            clear_action.triggered.connect(self.file_mng.clear_recent_files)
+            self.recent_menu.addAction(clear_action)
 
     def handle_delete(self):
         cursor = self.editor.textCursor()
@@ -338,11 +194,11 @@ class App(QMainWindow):
 
         app = QApplication.instance()
         
-        # 1. Clear existing styles to prevent Dark Mode bleeding into Light Mode
+        # Clear existing styles to prevent Dark Mode bleeding into Light Mode
         app.setStyleSheet("")
 
         if theme_name == "Light":
-            # 2. Force Fusion style to reset native OS style artifacts
+            # Force Fusion style to reset native OS style artifacts
             app.setStyle("Fusion") 
             app.setPalette(app.style().standardPalette())
 
@@ -384,6 +240,9 @@ class App(QMainWindow):
                 
                 self.current_theme = config.get("theme", "Light")
                 self.load_theme(self.current_theme)
+
+                self.recent_files = config.get("recent_files", []) #
+                self.update_recent_actions()
                 
                 print(f"Settings loaded successfully from {path}")
             except Exception as e:
@@ -394,7 +253,8 @@ class App(QMainWindow):
             "font_family": font,
             "font_size": size,
             "theme": theme,
-            "tab_spacing": tab_spacing
+            "tab_spacing": tab_spacing,
+            "recent_files": self.recent_files
         }
         try:
             settings_path = self.get_settings_path()

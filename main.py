@@ -7,8 +7,8 @@ def main():
     os.environ["QT_AUTOSCREENSCALE_FACTOR"] = "1"
     app = QApplication(sys.argv)
 
-    app.setOrganizationName("NVX")
-    app.setApplicationName("NVXEditor")
+    app.setOrganizationName("nvx")
+    app.setApplicationName("nvx_editor")
 
     window = App()
     window.show()

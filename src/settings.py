@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import QDialog, QFormLayout, QLineEdit, QComboBox, QDialogB
 class Settings(QDialog):
     # Settings dialog for editor font, size, theme, and tab spacing.
     def __init__(self, current_font, current_size, current_theme, current_tab, parent=None):
+        # Initialize and display settings controls with current values.
         super().__init__(parent)
         self.setWindowTitle("Settings")
         self.setModal(True)
@@ -57,6 +58,7 @@ class Settings(QDialog):
         layout.addWidget(buttons)
 
     def reset_defaults(self):
+        # Reset settings fields to built-in default values.
         self.font_combo.setCurrentText("Sans-Serif")
         self.font_size_spin.setValue(12)
         self.theme_combo.setCurrentText("Light")
