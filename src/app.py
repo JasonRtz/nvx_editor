@@ -8,8 +8,6 @@ from PyQt6.QtGui import QAction, QIcon, QKeySequence, QFont, QTextCursor, QDeskt
 from .settings import Settings
 from .file_manager import File_Manager
 
-# NVX Editor application main window class.
-# Manages file operations, edit actions, view actions, print, and settings persistence.
 class App(QMainWindow):
     def resource_base_path(self):
         # Determine the path to bundled assets for both dev and frozen exe.
@@ -26,11 +24,17 @@ class App(QMainWindow):
         self.setWindowTitle("NVX Editor")
         self.resize(800, 600)
         self.current_theme = "Light"
+        self.load_theme(self.current_theme)
 
         # Editor widget as central widget
         self.editor = QTextEdit()
         self.setCentralWidget(self.editor)
         self.current_file = None
+
+        # Ensure a clean default tab width for first-run users
+        default_tab_spaces = 4
+        space_width = self.editor.fontMetrics().horizontalAdvance(' ')
+        self.editor.setTabStopDistance(default_tab_spaces * space_width)
 
         # Application icon (.exe bundling via PyInstaller may set _MEIPASS)
         icon_path = os.path.normpath(str(self.resource_base_path() / "data" / "icons" / "nvx_editor.png"))
@@ -59,7 +63,7 @@ class App(QMainWindow):
         self.status_label = QLabel("Line: 1, Col: 1 | Characters: 0")
         self.status_bar.addPermanentWidget(self.status_label)
 
-        self.editor.cursorPositionChanged.connect(self.update_status_bar)
+        self.editor.cursorPositionChanged.connect(self.update_status_bar)        
 
     def view(self):
         menu_bar = self.menuBar()
