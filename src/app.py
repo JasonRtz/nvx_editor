@@ -32,9 +32,7 @@ class App(QMainWindow):
         self.current_file = None
 
         # Ensure a clean default tab width for first-run users
-        default_tab_spaces = 4
-        space_width = self.editor.fontMetrics().horizontalAdvance(' ')
-        self.editor.setTabStopDistance(default_tab_spaces * space_width)
+        self.tab_spacing = 4
 
         # Application icon (.exe bundling via PyInstaller may set _MEIPASS)
         icon_path = os.path.normpath(str(self.resource_base_path() / "data" / "icons" / "nvx_editor.png"))
@@ -274,6 +272,7 @@ class App(QMainWindow):
                 tab_spacing = int(config.get("tab_spacing", 4))
                 space_width = self.editor.fontMetrics().horizontalAdvance(' ')
                 self.editor.setTabStopDistance(int(tab_spacing) * space_width)
+                self.tab_spacing = tab_spacing
                 
                 self.current_theme = config.get("theme", "Light")
                 self.load_theme(self.current_theme)
@@ -313,6 +312,7 @@ class App(QMainWindow):
         default_font = "Sans-Serif"
         default_size = 12
         self.current_theme = "Light"
+        self.tab_spacing = 4
         
         self.editor.setFont(QFont(default_font, default_size))
         self.load_theme(self.current_theme)
@@ -322,9 +322,7 @@ class App(QMainWindow):
     def show_settings(self):
         current_font = self.editor.font().family()
         current_size = self.editor.font().pointSize()
-
-        current_tab = self.editor.tabStopDistance() / self.editor.fontMetrics().horizontalAdvance(' ')
-
+        current_tab = self.tab_spacing
 
         dialog = Settings(current_font, current_size, self.current_theme, int(current_tab), self)
         dialog.reset_btn.clicked.connect(lambda: self.reset_to_defaults(dialog))
@@ -352,6 +350,7 @@ class App(QMainWindow):
 
         space_width = self.editor.fontMetrics().horizontalAdvance(' ')
         self.editor.setTabStopDistance(tab_stop * space_width)
+        self.tab_spacing = tab_stop
 
         if new_theme != self.current_theme:
             self.current_theme = new_theme

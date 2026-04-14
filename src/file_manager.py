@@ -99,7 +99,7 @@ class File_Manager:
         
         current_font = self.app.editor.font().family()
         current_size = self.app.editor.font().pointSize()
-        tab_val = int(self.app.editor.tabStopDistance() / self.app.editor.fontMetrics().horizontalAdvance(' '))
+        tab_val = self.app.tab_spacing        
         self.app.save_settings_to_json(current_font, current_size, self.app.current_theme, tab_val)
 
     def clear_recent_files(self):
@@ -109,7 +109,7 @@ class File_Manager:
         
         current_font = self.app.editor.font().family()
         current_size = self.app.editor.font().pointSize()
-        tab_val = int(self.app.editor.tabStopDistance() / self.app.editor.fontMetrics().horizontalAdvance(' '))
+        tab_val = self.app.tab_spacing
         self.app.save_settings_to_json(current_font, current_size, self.app.current_theme, tab_val)
 
     def print_file(self):
