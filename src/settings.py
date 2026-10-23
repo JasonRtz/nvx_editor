@@ -36,8 +36,9 @@ class Settings(QDialog):
         form_layout.addRow("Theme:", self.theme_combo)
 
         # Tab Spacing
-        self.tab_size = QLineEdit()
-        self.tab_size.setText(str(current_tab))
+        self.tab_size = QSpinBox()
+        self.tab_size.setRange(1, 16)
+        self.tab_size.setValue(int(current_tab))
         form_layout.addRow("Tab Spacing:", self.tab_size)
 
         layout.addLayout(form_layout)
@@ -62,4 +63,4 @@ class Settings(QDialog):
         self.font_combo.setCurrentText("Sans-Serif")
         self.font_size_spin.setValue(12)
         self.theme_combo.setCurrentText("Light")
-        self.tab_size.setText("4")
+        self.tab_size.setValue(4)

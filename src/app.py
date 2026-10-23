@@ -340,10 +340,7 @@ class App(QMainWindow):
         # Apply Editor settings
         self.editor.setFont(QFont(new_font, new_size))
 
-        try:
-            tab_stop = int(dialog.tab_size.text() or 4)
-        except ValueError:
-            tab_stop = 4
+        tab_stop = dialog.tab_size.value()
 
         tab_val = tab_stop
 
