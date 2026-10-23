@@ -18,3 +18,8 @@ dist/
 
 #etc
 .building_process
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
