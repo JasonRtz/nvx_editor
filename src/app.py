@@ -28,6 +28,7 @@ class App(QMainWindow):
 
         # Editor widget as central widget
         self.editor = QTextEdit()
+        self.editor.setAcceptRichText(False)
         self.setCentralWidget(self.editor)
         self.current_file = None
 
@@ -61,7 +62,8 @@ class App(QMainWindow):
         self.status_label = QLabel("Line: 1, Col: 1 | Characters: 0")
         self.status_bar.addPermanentWidget(self.status_label)
 
-        self.editor.cursorPositionChanged.connect(self.update_status_bar)        
+        self.editor.cursorPositionChanged.connect(self.update_status_bar)
+        self.editor.textChanged.connect(self.update_status_bar)        
 
     def view(self):
         menu_bar = self.menuBar()
@@ -123,7 +125,7 @@ class App(QMainWindow):
         cursor = self.editor.textCursor()
         line = cursor.blockNumber() + 1
         col = cursor.columnNumber() + 1
-        char_count = self.editor.document().characterCount()
+        char_count = len(self.editor.toPlainText())
         
         self.status_label.setText(f"Line: {line}, Col: {col} | Characters: {char_count}")
 
@@ -298,26 +300,6 @@ class App(QMainWindow):
                 json.dump(config, f, indent=4)
         except Exception as e:
             print(f"Error saving settings: {e}")
-    
-    def reset_to_defaults(self, dialog):
-        path = self.get_settings_path()
-        
-        if os.path.exists(path):
-            try:
-                os.remove(path)
-                print("Settings file deleted. Reverting to defaults.")
-            except Exception as e:
-                print(f"Error deleting settings: {e}")
-
-        default_font = "Sans-Serif"
-        default_size = 12
-        self.current_theme = "Light"
-        self.tab_spacing = 4
-        
-        self.editor.setFont(QFont(default_font, default_size))
-        self.load_theme(self.current_theme)
-        
-        dialog.accept()
 
     def show_settings(self):
         current_font = self.editor.font().family()
