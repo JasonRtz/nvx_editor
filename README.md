@@ -1,4 +1,4 @@
-# NVK Editor
+# NVX Editor
 
 <div align="center">
   <img src="https://github.com/user-attachments/assets/1e39562d-e194-4e47-9ce1-64f08aadb1e5" width="128" height="128" alt="NVK Editor Logo">
@@ -8,7 +8,7 @@
 ---
 
 ## Overview
-NVK Editor is a simple text editor designed for speed and ease of use. Leveraging the **Qt application framework**, it provides a responsive interface and essential features for everyday use.
+NVX Editor is a simple text editor designed for speed and ease of use. Leveraging the **Qt application framework**, it provides a responsive interface and essential features for everyday use.
 
 ## Features
 * **Lightweight Performance:** Fast startup times and low memory footprint.
