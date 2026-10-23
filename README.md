@@ -89,6 +89,36 @@ It provides a straightforward interface for creating and editing plain-text file
    .\.venv\Scripts\python.exe main.py
    ```
 
+### Linux
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/JasonRtz/nvx_editor.git
+   cd nvx_editor
+   ```
+
+2. Create a virtual environment:
+
+   ```bash
+   python3 -m venv .venv
+   ```
+
+3. Install dependencies:
+
+   ```bash
+   .venv/bin/python -m pip install -r requirements.txt
+   ```
+
+4. Run the application:
+
+   ```bash
+   .venv/bin/python main.py
+   ```
+
+**Note:** Some Linux distributions may require additional system packages for Python virtual environments or Qt.
+
+
 ## Running Tests
 
 Install development dependencies:
@@ -102,3 +132,11 @@ Run the automated tests:
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -v
 ```
+
+## License
+
+NVX Editor is free and open-source software licensed under the GNU General Public License v3.0 (GPL-3.0).
+
+You are free to use, modify, and redistribute the software under the terms of this license.
+
+See the [LICENSE](LICENSE) file for the full license text.
