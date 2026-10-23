@@ -88,29 +88,37 @@ class File_Manager:
             return False
 
     def file_save_as(self):
-        # Show Save As dialog and write content to chosen path (includes PDF support).
-        path, _ = QFileDialog.getSaveFileName(self.app, "Save File As", "",
-                                             "Text File (*.txt);;PDF File (*.pdf);;All Files (*)")
+    # Save the current document as a plain text file.
+        path, _ = QFileDialog.getSaveFileName(
+            self.app,
+            "Save File As",
+            "",
+            "Text Files (*.txt)"
+        )
+
         if not path:
             return False
 
+        if not path.lower().endswith(".txt"):
+            path += ".txt"
+
         try:
-            if path.endswith(".pdf"):
-                printer = QPrinter(QPrinter.PrinterMode.HighResolution)
-                printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
-                printer.setOutputFileName(path)
-                self.app.editor.document().print(printer)
-            else:
-                with open(path, 'w', encoding='utf-8') as f:
-                    f.write(self.app.editor.toPlainText())
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(self.app.editor.toPlainText())
 
             self.app.current_file = path
             self.update_recent_files(path)
             self.app.editor.document().setModified(False)
             self.app.setWindowTitle(f"NVX Editor - {path}")
+
             return True
+
         except Exception as e:
-            QMessageBox.critical(self.app, "Error", f"Could not save file: {e}")
+            QMessageBox.critical(
+                self.app,
+                "Error",
+                f"Could not save file: {e}"
+            )
             return False
     
     def update_recent_files(self, path):
