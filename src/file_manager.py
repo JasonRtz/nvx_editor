@@ -1,5 +1,6 @@
 from PyQt6.QtWidgets import QFileDialog, QMessageBox
 from PyQt6.QtPrintSupport import QPrintDialog, QPrinter
+from pathlib import Path
 
 class File_Manager:
     def __init__(self, app_instance):
@@ -7,7 +8,7 @@ class File_Manager:
         self.app = app_instance  
     
     def new_file(self):
-        # Create a new file buffer, prompting to save changes first if needed.
+    # Create a new file buffer, prompting to save changes first if needed.
         if self.app.editor.document().isModified():
             reply = QMessageBox.question(
                 self.app, 'Save Changes?',
@@ -18,11 +19,13 @@ class File_Manager:
             )
 
             if reply == QMessageBox.StandardButton.Save:
-                self.file_save()
+                if not self.file_save():
+                    return
             elif reply == QMessageBox.StandardButton.Cancel:
                 return
 
         self.app.editor.clear()
+        self.app.editor.document().setModified(False)
         self.app.current_file = None
         self.app.setWindowTitle("NVX Editor")
 
@@ -35,21 +38,43 @@ class File_Manager:
     
     def open_recent_file(self, path):
         # Load file content from path into editor and update recent list.
+        if self.app.current_file:
+            if Path(self.app.current_file).resolve() == Path(path).resolve():
+                return
+
         try:
             with open(path, 'r', encoding='utf-8') as f:
                 text = f.read()
-            self.app.editor.setPlainText(text)
-            self.app.current_file = path
-            self.app.setWindowTitle(f"NVX Editor - {path}")
-            self.update_recent_files(path)
         except Exception as e:
-            QMessageBox.critical(self.app, "Error", f"Could not open file: {e}")
+            QMessageBox.critical(
+                self.app, "Error", f"Could not open file: {e}"
+            )
+            return
+
+        if self.app.editor.document().isModified():
+            reply = QMessageBox.question(
+                self.app, 'Save Changes?',
+                "Save changes before opening another file?",
+                QMessageBox.StandardButton.Save |
+                QMessageBox.StandardButton.Discard |
+                QMessageBox.StandardButton.Cancel
+                )
+            if reply == QMessageBox.StandardButton.Save:
+                if not self.file_save():
+                    return
+            elif reply == QMessageBox.StandardButton.Cancel:
+                    return
+
+        self.app.editor.setPlainText(text)
+        self.app.editor.document().setModified(False)
+        self.app.current_file = path
+        self.app.setWindowTitle(f"NVX Editor - {path}")
+        self.update_recent_files(path)
     
     def file_save(self):
         # Save current contents to current file path; delegate to Save As when no file selected.
         if not self.app.current_file:
-            self.file_save_as()
-            return
+            return self.file_save_as()
             
         try:
             with open(self.app.current_file, 'w', encoding='utf-8') as f:
@@ -57,15 +82,17 @@ class File_Manager:
 
             self.app.editor.document().setModified(False)
             self.app.setWindowTitle(f"NVX Editor - {self.app.current_file}")
+            return True
         except Exception as e:
             QMessageBox.critical(self.app, "Error", f"Could not save file: {e}")
-    
+            return False
+
     def file_save_as(self):
         # Show Save As dialog and write content to chosen path (includes PDF support).
         path, _ = QFileDialog.getSaveFileName(self.app, "Save File As", "",
                                              "Text File (*.txt);;PDF File (*.pdf);;All Files (*)")
         if not path:
-            return
+            return False
 
         try:
             if path.endswith(".pdf"):
@@ -81,8 +108,10 @@ class File_Manager:
             self.update_recent_files(path)
             self.app.editor.document().setModified(False)
             self.app.setWindowTitle(f"NVX Editor - {path}")
+            return True
         except Exception as e:
             QMessageBox.critical(self.app, "Error", f"Could not save file: {e}")
+            return False
     
     def update_recent_files(self, path):
         # Add a path to recently opened files, keep list trimmed, and persist settings.
@@ -133,8 +162,10 @@ class File_Manager:
             )
 
             if reply == QMessageBox.StandardButton.Save:
-                self.file_save()
-                event.accept() 
+                if self.file_save():
+                    event.accept()
+                else:
+                    event.ignore()
             elif reply == QMessageBox.StandardButton.Discard:
                 event.accept() 
             else:
