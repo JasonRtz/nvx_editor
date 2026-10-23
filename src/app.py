@@ -325,7 +325,6 @@ class App(QMainWindow):
         current_tab = self.tab_spacing
 
         dialog = Settings(current_font, current_size, self.current_theme, int(current_tab), self)
-        dialog.reset_btn.clicked.connect(lambda: self.reset_to_defaults(dialog))
         
         if hasattr(dialog, 'apply_button') and dialog.apply_button is not None:
             dialog.apply_button.clicked.connect(lambda: self.apply_settings_from_dialog(dialog))
