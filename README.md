@@ -16,16 +16,6 @@ It provides a straightforward interface for creating and editing plain-text file
 
 ## Features
 
-## Screenshots
-
-### Light Theme
-
-![NVX Editor - Light Theme](assets/screenshots/light-theme.png)
-
-### Dark Theme
-
-![NVX Editor - Dark Theme](assets/screenshots/dark-theme.png)
-
 ### File Management
 - Create, open, and save plain-text files.
 - Access recently opened files.
@@ -50,10 +40,15 @@ It provides a straightforward interface for creating and editing plain-text file
 - Status bar displaying line, column, and character count.
 - Keyboard shortcuts for common actions.
 
-## Requirements
+## Screenshots
 
-- Python 3
-- PyQt6
+### Light Theme
+
+![NVX Editor - Light Theme](assets/screenshots/light-theme.png)
+
+### Dark Theme
+
+![NVX Editor - Dark Theme](assets/screenshots/dark-theme.png)
 
 ## Requirements
 
